@@ -1,13 +1,15 @@
-const url = 'https://weatherbit-v1-mashape.p.rapidapi.com/forecast/3hourly?lat=35.5&lon=-78.5&units=imperial&lang=en';
-const options = {
-  method: 'GET',
-  headers: {
-    'x-rapidapi-key': 'bfc8e83032mshd3f7bc43fb06810p145e41jsn88dc1fc1315b',
-    'x-rapidapi-host': 'weatherbit-v1-mashape.p.rapidapi.com'
-  }
-};
 
-async function getWeatherData() {
+async function getWeatherData(location) {
+  const url = `https://weatherapi-com.p.rapidapi.com/current.json?q=${location}`;
+  
+  const options = {
+    method: 'GET',
+    headers: {
+      'x-rapidapi-key': 'bfc8e83032mshd3f7bc43fb06810p145e41jsn88dc1fc1315b',
+      'x-rapidapi-host': 'weatherapi-com.p.rapidapi.com'
+    }
+  };
+
   try {
     const response = await fetch(url, options);
     const result = await response.json();
@@ -19,45 +21,38 @@ async function getWeatherData() {
   }
 }
 
+
 function updateWeatherUI(data) {
-  if (!data || !data.data) {
+  if (!data || !data.current) {
     document.getElementById('weather-info').innerHTML = '<p>Error fetching weather data.</p>';
     return;
   }
 
-  
-  document.getElementById('location-name').textContent = data.city_name;
+  document.getElementById('location-name').textContent = data.location.name;
   document.getElementById('current-date').textContent = new Date().toLocaleDateString();
-  document.getElementById('temp').textContent = data.data[0].temp + '°F';
-  document.getElementById('weather-condition').textContent = data.data[0].weather.description;
-  document.getElementById('weather-icon').src = `https://www.weatherbit.io/static/img/icons/${data.data[0].weather.icon}.png`;
-  document.getElementById('humidity').textContent = data.data[0].rh + '%';
-  document.getElementById('wind-speed').textContent = data.data[0].wind_spd + ' mph';
-
-  const forecastContainer = document.getElementById('forecast-cards');
-  forecastContainer.innerHTML = '';
-
-  data.data.slice(0, 5).forEach((item) => {
-    const card = document.createElement('div');
-    card.className = 'forecast-card';
-    card.innerHTML = `
-      <div class="forecast-date">${new Date(item.timestamp_local).toLocaleDateString('en-US', { weekday: 'short' })}</div>
-      <img src="https://www.weatherbit.io/static/img/icons/${item.weather.icon}.png" alt="${item.weather.description}">
-      <div class="forecast-temp">${item.temp}°F</div>
-      <div>${item.weather.description}</div>
-    `;
-    forecastContainer.appendChild(card);
-  });
+  document.getElementById('temp').textContent = data.current.temp_f + '°F';
+  document.getElementById('weather-condition').textContent = data.current.condition.text;
+  document.getElementById('weather-icon').src = data.current.condition.icon;
+  document.getElementById('humidity').textContent = data.current.humidity + '%';
+  document.getElementById('wind-speed').textContent = data.current.wind_mph + ' mph';
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-  document.getElementById('location-input').value = 'London';
+  const defaultLocation = 'London';
+  document.getElementById('location-input').value = defaultLocation;
   
-  const weatherData = await getWeatherData();
-  updateWeatherUI(weatherData);
+  const weatherData = await getWeatherData(defaultLocation);
+  updateWeatherUI(weatherData); 
 });
 
 document.getElementById('search-button').addEventListener('click', async () => {
-  const weatherData = await getWeatherData();
-  updateWeatherUI(weatherData);
+  const location = document.getElementById('location-input').value;
+  
+  if (!location) {
+    alert("Please enter a location!");
+    return;
+  }
+
+  const weatherData = await getWeatherData(location);
+  updateWeatherUI(weatherData); 
 });
